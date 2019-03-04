@@ -5,6 +5,7 @@
  */
 package GUI_N_LOGIC;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -38,6 +39,7 @@ public class App extends javax.swing.JApplet {
     //  *****       LABELS          *****
     private JLabel backgroundLbl;
     public static JLabel redCarLbl, blueCarLbl;
+    public static JLabel maxCarsLbl;
     private ImageIcon bg, start, startD, stop, stopD;
 
     //  *****       BUTTONS         *****
@@ -207,6 +209,14 @@ public class App extends javax.swing.JApplet {
         App.blueCarLbl.setFont(font);
         App.blueCarLbl.setText("Blue Car Passing");
 
+        App.maxCarsLbl = new JLabel();
+        App.maxCarsLbl.setBounds(33, 250, 159, 19);
+        App.maxCarsLbl.setFont(font);
+        App.maxCarsLbl.setForeground(Color.yellow);
+        App.maxCarsLbl.setVerticalAlignment(SwingConstants.CENTER);
+        App.maxCarsLbl.setVerticalAlignment(SwingConstants.CENTER);
+        App.maxCarsLbl.setText("max cars: ");
+
         this.start = new ImageIcon(getClass().getResource("/Images/Buttons/startBtn-enabled.png"));
         this.startD = new ImageIcon(getClass().getResource("/Images/Buttons/startBtn-disabled.png"));
         this.stop = new ImageIcon(getClass().getResource("/Images/Buttons/stopBtn-enabled.png"));
@@ -244,6 +254,7 @@ public class App extends javax.swing.JApplet {
         this.backgroundLbl.add(App.blueCarLbl);
         this.backgroundLbl.add(this.startBtn);
         this.backgroundLbl.add(this.stopBtn);
+        this.backgroundLbl.add(App.maxCarsLbl);
     }
 
     private void startBtnActionPerformed() {
@@ -285,19 +296,17 @@ public class App extends javax.swing.JApplet {
 
     }
 
+    /**
+     * Stop Button stops threads and calls system to exit
+     */
     private void stopBtnActionPerformed() {
         if (this.manager != null) {
             this.stopBtn.setIcon(new ImageIcon(this.stopD.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
             this.startBtn.setIcon(new ImageIcon(this.start.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
 
-            if (!this.manager.isRunning()) {
-                try {
-                    this.manager.stopSimulation();
-                    this.manager.join();
-                    this.manager = null;
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-                }
+            if (this.manager.isRunning()) {
+                this.manager.stopSimulation();
+                this.manager = null;
             }
         } else {
             System.out.println("No app running");
@@ -312,6 +321,7 @@ public class App extends javax.swing.JApplet {
                 if (this.manager != null) {
                     if (this.manager.isRunning()) {
                         int number_of_cars = Integer.parseInt(this.number_of_CARS.getText());
+                        //App.maxCarsLbl.setText("max cars: " + number_of_cars);
                         if (number_of_cars > 0) {
                             this.manager.setMaxCars(number_of_cars);
                         } else {
@@ -425,7 +435,7 @@ public class App extends javax.swing.JApplet {
         );
         carsLayout.setVerticalGroup(
             carsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 261, Short.MAX_VALUE)
+            .addGap(0, 262, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -445,7 +455,7 @@ public class App extends javax.swing.JApplet {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(137, 137, 137)
                 .addComponent(safeBtn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 2, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 1, Short.MAX_VALUE)
                 .addComponent(fairBtn)
                 .addGap(49, 49, 49)
                 .addComponent(cars, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -466,6 +476,10 @@ public class App extends javax.swing.JApplet {
     private void safeBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_safeBtnActionPerformed
         if (this.manager != null) {
             this.manager.setBridgeSafe(this.safeBtn.isSelected());
+        }
+
+        if (!this.safeBtn.isSelected()) {
+            JOptionPane.showMessageDialog(null, "Unsafe Scenario Activated\nFixed foreground colors suggest\nthere were a collision", "WARNING", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_safeBtnActionPerformed
 

@@ -1,16 +1,12 @@
 package GUI_N_LOGIC;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class Manager extends Thread {
 
     private boolean run;
     private int maxCars;
-    private Bridge bridge;
+    private final Bridge bridge;
     private Car[] blue, red;
-    private int frequency;
-    private boolean maxCarsChanged;
+    private final int frequency;
 
     /**
      *
@@ -32,12 +28,10 @@ public class Manager extends Thread {
          */
         this.bridge = new Bridge(delay * 1000, fair, safe);
 
-        //  INITIALIZING CAR ARRAYS
+        //  INITIALIZING CAR VALUES
         this.maxCars = maxCars;
         this.frequency = frequency;
-        setCars();
 
-        this.maxCarsChanged = false;
     }
 
     private void setCars() {
@@ -59,6 +53,8 @@ public class Manager extends Thread {
             this.blue[i].start();
             System.out.println("blue started");
         }
+
+        App.maxCarsLbl.setText("max cars: " + maxCars);
     }
 
     /**
@@ -66,27 +62,12 @@ public class Manager extends Thread {
      */
     @Override
     public void run() {
-        while (this.run) {
-            if (this.maxCarsChanged) {
-                setCars();
-            }
-
-        }
+        setCars();
     }
 
     public void stopSimulation() {
         this.run = false;
-        for (int i = 0; i < maxCars; i++) {
-            try {
-                this.red[i].join();
-                this.red[i] = null;
-                
-                this.blue[i].join();
-                this.blue[i] = null;
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Manager.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
+        setMaxCars(0);
     }
 
     public boolean isRunning() {
@@ -94,8 +75,45 @@ public class Manager extends Thread {
     }
 
     public void setMaxCars(int max) {
-        this.maxCars = max;
-        this.maxCarsChanged = true;
+        if (max < maxCars) {
+            int res = maxCars - max;
+            int i = maxCars - 1;
+            while (res > 0 && i >= 0) {
+                if (this.blue[i] != null) {
+
+                    this.blue[i].stopRunning();
+                    this.blue[i] = null;
+
+                    this.red[i].stopRunning();
+                    this.blue[i] = null;
+
+                    res--;
+                }
+                i--;
+            }
+            if (max > 0) {
+                maxCars = max;
+            }
+        } else if (max > maxCars) {
+            int temp = maxCars;
+            this.red = new Car[red.length + (max - maxCars)];
+            this.blue = new Car[blue.length + (max - maxCars)];
+            maxCars = max;
+            for (int i = temp; i < red.length; i++) {
+                if (this.red[i] == null) {
+                    this.red[i] = new Car(bridge, 1, frequency * 1000);
+                    this.blue[i] = new Car(bridge, 2, frequency * 1000);
+                    this.red[i].setName("red " + i);
+                    this.blue[i].setName("blue " + i);
+
+                    this.red[i].start();
+                    System.out.println("red started");
+                    this.blue[i].start();
+                    System.out.println("blue started");
+                }
+            }
+        }
+        App.maxCarsLbl.setText("max cars: " + maxCars);
     }
 
     public void setBridgeDelay(int delay) {
