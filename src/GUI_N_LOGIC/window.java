@@ -14,6 +14,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -32,16 +35,20 @@ public class window extends javax.swing.JApplet {
     private JPanel panel;
 
     //  *****       LABELS          *****
-    private JLabel backgroundLbl, redCarLbl, blueCarLbl;
+    private JLabel backgroundLbl;
+    public static JLabel redCarLbl, blueCarLbl;
     private ImageIcon bg, start, startD, stop, stopD;
 
     //  *****       BUTTONS         *****
     private JButton startBtn, stopBtn;
-    private int btnSize = 35;
+    private final int btnSize = 35;
 
     //  *****       TEXT            *****
     private JTextField nCars, ableToPass;
     private Font font;
+
+    //  *****       MANAGER         *****
+    private Manager manager;
 
     /**
      * Initializes the applet window
@@ -73,15 +80,12 @@ public class window extends javax.swing.JApplet {
 
         /* Create and display the applet */
         try {
-            java.awt.EventQueue.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    initComp();
-                    initComponents();
-                }
+            java.awt.EventQueue.invokeAndWait(() -> {
+                initComp();
+                initComponents();
             });
 
-        } catch (Exception ex) {
+        } catch (InterruptedException | InvocationTargetException ex) {
             ex.printStackTrace();
         }
     }
@@ -125,6 +129,9 @@ public class window extends javax.swing.JApplet {
                 }
             }
         });
+        this.nCars.addActionListener((ActionEvent ae) -> {
+            textFieldActionPerformed();
+        });
 
         this.ableToPass = new JTextField();
         this.ableToPass.setSize(new Dimension(110, 30));
@@ -151,20 +158,23 @@ public class window extends javax.swing.JApplet {
                 }
             }
         });
+        this.ableToPass.addActionListener((ActionEvent ae) -> {
+            textFieldActionPerformed();
+        });
 
-        this.redCarLbl = new JLabel();
-        this.redCarLbl.setBounds(15, 250, 195, 175);
-        this.redCarLbl.setForeground(Color.green);
-        this.redCarLbl.setHorizontalAlignment(SwingConstants.CENTER);
-        this.redCarLbl.setFont(font);
-        this.redCarLbl.setText("Red Car Passing");
-        
-        this.blueCarLbl = new JLabel();
-        this.blueCarLbl.setBounds(340, 315, 195, 50);
-        this.blueCarLbl.setForeground(Color.green);
-        this.blueCarLbl.setHorizontalAlignment(SwingConstants.CENTER);
-        this.blueCarLbl.setFont(font);
-        this.blueCarLbl.setText("Blue Car Passing");
+        window.redCarLbl = new JLabel();
+        window.redCarLbl.setBounds(15, 250, 195, 175);
+        window.redCarLbl.setForeground(Color.GRAY);
+        window.redCarLbl.setHorizontalAlignment(SwingConstants.CENTER);
+        window.redCarLbl.setFont(font);
+        window.redCarLbl.setText("Red Car Passing");
+
+        window.blueCarLbl = new JLabel();
+        window.blueCarLbl.setBounds(340, 315, 195, 50);
+        window.blueCarLbl.setForeground(Color.GRAY);
+        window.blueCarLbl.setHorizontalAlignment(SwingConstants.CENTER);
+        window.blueCarLbl.setFont(font);
+        window.blueCarLbl.setText("Blue Car Passing");
 
         this.start = new ImageIcon(getClass().getResource("/Images/Buttons/startBtn-enabled.png"));
         this.startD = new ImageIcon(getClass().getResource("/Images/Buttons/startBtn-disabled.png"));
@@ -180,7 +190,11 @@ public class window extends javax.swing.JApplet {
         this.startBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                startBtnActionPerformed();
+                try {
+                    startBtnActionPerformed();
+                } catch (Exception ex) {
+                    Logger.getLogger(window.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
@@ -190,31 +204,64 @@ public class window extends javax.swing.JApplet {
         this.stopBtn.setBorder(null);
         this.stopBtn.setContentAreaFilled(false);
         this.stopBtn.setIcon(new ImageIcon(this.stopD.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
-        this.stopBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                stopBtnActionPerformed();
-            }
+        this.stopBtn.addActionListener((ActionEvent ae) -> {
+            stopBtnActionPerformed();
         });
-        
-        
+
         this.add(this.backgroundLbl);
         this.backgroundLbl.add(this.nCars);
         this.backgroundLbl.add(this.ableToPass);
-        this.backgroundLbl.add(this.redCarLbl);
-        this.backgroundLbl.add(this.blueCarLbl);
+        this.backgroundLbl.add(window.redCarLbl);
+        this.backgroundLbl.add(window.blueCarLbl);
         this.backgroundLbl.add(this.startBtn);
         this.backgroundLbl.add(this.stopBtn);
     }
 
-    private void startBtnActionPerformed() {
+    private synchronized void startBtnActionPerformed() throws Exception {
         this.startBtn.setIcon(new ImageIcon(this.startD.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
         this.stopBtn.setIcon(new ImageIcon(this.stop.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
+
+        if (this.manager == null) {
+            if (this.nCars.getText().isEmpty() || this.ableToPass.getText().isEmpty()) {
+                throw new Exception("There's one or more empty fields needed to start");
+            } else {
+                int number_of_cars = Integer.parseInt(this.nCars.getText());
+                int able_to_pass = Integer.parseInt(this.ableToPass.getText());
+
+                
+
+                //                      VALIDATIONS
+                if (number_of_cars <= 0 || able_to_pass <= 0) {
+                    throw new Exception("There's one or more fields with invalid values");
+                } else {
+                    this.manager = new Manager(number_of_cars, able_to_pass, this.fairBtn.isSelected(), this.safeBtn.isSelected());
+                    this.manager.start();
+                }
+            }
+        } else {
+            System.out.println("App is already running");
+        }
+
     }
-    
-    private void stopBtnActionPerformed() {
+
+    private synchronized void stopBtnActionPerformed() {
         this.stopBtn.setIcon(new ImageIcon(this.stopD.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
         this.startBtn.setIcon(new ImageIcon(this.start.getImage().getScaledInstance(this.btnSize, this.btnSize, Image.SCALE_SMOOTH)));
+
+        if (this.manager != null) {
+            if (!this.manager.isRunning()) {
+                this.manager.stopSimulation();
+                this.manager = null;
+            }
+        } else {
+            System.out.println("No app running");
+        }
+    }
+
+    private void textFieldActionPerformed() {
+        if (this.manager.isRunning()) {
+            System.out.println("Program is already running... Please stop before any change");
+        }
     }
 
     /**
@@ -228,46 +275,26 @@ public class window extends javax.swing.JApplet {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
-        collisionBtn = new javax.swing.JRadioButton();
-        unfairBtn = new javax.swing.JRadioButton();
-        raBtn = new javax.swing.JRadioButton();
-        srotBtn = new javax.swing.JRadioButton();
+        safeBtn = new javax.swing.JRadioButton();
+        fairBtn = new javax.swing.JRadioButton();
         cars = new javax.swing.JPanel();
 
         jPanel1.setBackground(new java.awt.Color(0, 107, 51));
 
-        collisionBtn.setBackground(new java.awt.Color(0, 107, 51));
-        buttonGroup1.add(collisionBtn);
-        collisionBtn.setFont(new java.awt.Font("Orator Std", 0, 14)); // NOI18N
-        collisionBtn.setForeground(new java.awt.Color(255, 255, 255));
-        collisionBtn.setText("collision");
-        collisionBtn.setContentAreaFilled(false);
-        collisionBtn.setFocusPainted(false);
+        safeBtn.setBackground(new java.awt.Color(0, 107, 51));
+        safeBtn.setFont(new java.awt.Font("Orator Std", 0, 14)); // NOI18N
+        safeBtn.setForeground(new java.awt.Color(255, 255, 255));
+        safeBtn.setSelected(true);
+        safeBtn.setText("safe");
+        safeBtn.setContentAreaFilled(false);
+        safeBtn.setFocusPainted(false);
 
-        unfairBtn.setBackground(new java.awt.Color(0, 107, 51));
-        buttonGroup1.add(unfairBtn);
-        unfairBtn.setFont(new java.awt.Font("Orator Std", 0, 14)); // NOI18N
-        unfairBtn.setForeground(new java.awt.Color(255, 255, 255));
-        unfairBtn.setText("unfair");
-        unfairBtn.setContentAreaFilled(false);
-        unfairBtn.setFocusPainted(false);
-
-        raBtn.setBackground(new java.awt.Color(0, 107, 51));
-        buttonGroup1.add(raBtn);
-        raBtn.setFont(new java.awt.Font("Orator Std", 0, 14)); // NOI18N
-        raBtn.setForeground(new java.awt.Color(255, 255, 255));
-        raBtn.setText("rot & adapt");
-        raBtn.setContentAreaFilled(false);
-        raBtn.setFocusPainted(false);
-
-        srotBtn.setBackground(new java.awt.Color(0, 107, 51));
-        buttonGroup1.add(srotBtn);
-        srotBtn.setFont(new java.awt.Font("Orator Std", 0, 14)); // NOI18N
-        srotBtn.setForeground(new java.awt.Color(255, 255, 255));
-        srotBtn.setSelected(true);
-        srotBtn.setText("strict rot");
-        srotBtn.setContentAreaFilled(false);
-        srotBtn.setFocusPainted(false);
+        fairBtn.setBackground(new java.awt.Color(0, 107, 51));
+        fairBtn.setFont(new java.awt.Font("Orator Std", 0, 14)); // NOI18N
+        fairBtn.setForeground(new java.awt.Color(255, 255, 255));
+        fairBtn.setText("fair");
+        fairBtn.setContentAreaFilled(false);
+        fairBtn.setFocusPainted(false);
 
         cars.setBackground(new java.awt.Color(64, 63, 63));
 
@@ -289,25 +316,19 @@ public class window extends javax.swing.JApplet {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(56, 56, 56)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(raBtn)
-                    .addComponent(srotBtn)
-                    .addComponent(unfairBtn)
-                    .addComponent(collisionBtn))
-                .addContainerGap(371, Short.MAX_VALUE))
+                    .addComponent(fairBtn)
+                    .addComponent(safeBtn))
+                .addContainerGap(427, Short.MAX_VALUE))
             .addComponent(cars, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(122, 122, 122)
-                .addComponent(collisionBtn)
+                .addGap(137, 137, 137)
+                .addComponent(safeBtn)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 2, Short.MAX_VALUE)
-                .addComponent(unfairBtn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(srotBtn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(raBtn)
-                .addGap(18, 18, 18)
+                .addComponent(fairBtn)
+                .addGap(49, 49, 49)
                 .addComponent(cars, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
@@ -327,10 +348,8 @@ public class window extends javax.swing.JApplet {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JPanel cars;
-    private javax.swing.JRadioButton collisionBtn;
+    private javax.swing.JRadioButton fairBtn;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JRadioButton raBtn;
-    private javax.swing.JRadioButton srotBtn;
-    private javax.swing.JRadioButton unfairBtn;
+    private javax.swing.JRadioButton safeBtn;
     // End of variables declaration//GEN-END:variables
 }

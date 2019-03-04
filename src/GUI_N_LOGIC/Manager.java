@@ -9,9 +9,40 @@ package GUI_N_LOGIC;
  *
  * @author Samuel
  */
-public class Manager {
+public class Manager extends Thread {
 
-    public Manager() {
-        
+    private boolean run;
+    private final int numberOfCars;
+    private final int ableToPass;
+
+    /**
+     *
+     * @param numberOfCars
+     * @param ableToPass
+     * @param fair
+     * @param safe
+     */
+    public Manager(int numberOfCars, int ableToPass, boolean fair, boolean safe) {
+        this.run = true;
+        this.numberOfCars = numberOfCars;
+        this.ableToPass = ableToPass;
+    }
+
+    /**
+     *
+     */
+    @Override
+    public void run() {
+        while (this.run) {
+
+        }
+    }
+
+    public void stopSimulation() {
+        this.run = false;
+    }
+
+    public boolean isRunning() {
+        return this.run;
     }
 }
