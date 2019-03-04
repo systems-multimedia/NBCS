@@ -1,29 +1,46 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package GUI_N_LOGIC;
 
-/**
- *
- * @author Samuel
- */
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class Car extends Thread {
 
     private final Bridge bridge;
     private final int type;
-    private final int frequency;
+    private int frequency;
+    private boolean run;
 
+    /**
+     *
+     * @param bridge
+     * @param type
+     * @param frequency
+     */
     public Car(Bridge bridge, int type, int frequency) {
         this.bridge = bridge;
         this.type = type;
         this.frequency = frequency;
-        
+        this.run = true;
+
     }
 
     @Override
     public void run() {
+        while (this.run) {
+            try {
+                this.bridge.pass(type, this);
+                Thread.sleep(frequency);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Car.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
+    public void setFrequency(int frequency) {
+        this.frequency = frequency * 1000;
+    }
+
+    public void stopRunning() {
+        this.run = false;
     }
 }

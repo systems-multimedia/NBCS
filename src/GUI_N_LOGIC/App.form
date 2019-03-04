@@ -81,6 +81,9 @@
             <Property name="contentAreaFilled" type="boolean" value="false"/>
             <Property name="focusPainted" type="boolean" value="false"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="safeBtnActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JRadioButton" name="fairBtn">
           <Properties>
@@ -97,6 +100,9 @@
             <Property name="contentAreaFilled" type="boolean" value="false"/>
             <Property name="focusPainted" type="boolean" value="false"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fairBtnActionPerformed"/>
+          </Events>
         </Component>
         <Container class="javax.swing.JPanel" name="cars">
           <Properties>
