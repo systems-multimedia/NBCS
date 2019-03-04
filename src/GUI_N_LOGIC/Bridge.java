@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package applet1;
+package GUI_N_LOGIC;
 
 import java.util.concurrent.Semaphore;
 
